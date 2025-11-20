@@ -12,3 +12,99 @@ datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
+
+enum StudentType {
+  PREGRADO
+  POSGRADO
+}
+
+enum StudentStatus {
+  MATRICULADO
+  NO_ACTIVO
+}
+
+enum BiometricStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum PhotoRequestStatus {
+  PENDIENTE
+  APROBADO
+  RECHAZADO
+}
+
+enum ValidationResult {
+  APROBADO
+  RECHAZADO
+}
+
+enum AdminRole {
+  SuperAdmin
+  ValidaTor
+}
+
+model Student {
+  student_id     String         @id @db.VarChar
+  firebase_id    String?        @unique @db.VarChar
+  student_code   String?        @db.VarChar
+  card_photo_url String?        @db.VarChar
+  email          String         @db.VarChar(50)
+  name           String         @db.VarChar(50)
+  last_name      String         @db.VarChar(50)
+  student_type   StudentType
+  career         String         @db.VarChar(120)
+  status         StudentStatus
+  created_at     DateTime       @default(now())
+  updated_at     DateTime       @updatedAt
+
+  biometric_profile BiometricProfile?
+  photo_requests    PhotoRequest[]
+}
+
+model BiometricProfile {
+  biometric_id String          @id @db.VarChar
+  student_id   String          @unique @db.VarChar
+  status       BiometricStatus
+  photo_url    String          @db.VarChar(200)
+  created_at   DateTime        @default(now())
+
+  student        Student        @relation(fields: [student_id], references: [student_id])
+  validations    BiometricValidationLog[]
+}
+
+model BiometricValidationLog {
+  validation_id String           @id @db.VarChar
+  biometric_id  String           @db.VarChar
+  similitarity  Decimal
+  result        ValidationResult
+  created_at    DateTime         @default(now())
+
+  biometric     BiometricProfile @relation(fields: [biometric_id], references: [biometric_id])
+}
+
+model AdminUser {
+  admin_id  String    @id @db.VarChar
+  name      String    @db.VarChar(50)
+  last_name String    @db.VarChar(50)
+  role      AdminRole
+  email     String    @db.VarChar(100)
+  password  String    @db.VarChar(200)
+  created_at DateTime @default(now())
+
+  photo_requests PhotoRequest[]
+}
+
+model PhotoRequest {
+  request_id      String             @id @db.VarChar
+  student_id      String             @db.VarChar
+  admin_id        String?            @db.VarChar
+  status          PhotoRequestStatus
+  new_photo_url   String?            @db.VarChar
+  application_date DateTime          @default(now())
+  response_date    DateTime?
+
+  student Student @relation(fields: [student_id], references: [student_id])
+  admin   AdminUser? @relation(fields: [admin_id], references: [admin_id])
+}
