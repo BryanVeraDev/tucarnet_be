@@ -5,8 +5,10 @@ import {
   NestFastifyApplication,
 } from '@nestjs/platform-fastify';
 import { AppModule } from './app.module';
+import { initializeFirebase } from './config/firebase.config';
 
 async function bootstrap() {
+  initializeFirebase();
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
     new FastifyAdapter()
