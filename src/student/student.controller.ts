@@ -12,6 +12,15 @@ export class StudentController {
     return this.studentService.create(createStudentDto);
   }
 
+  /**
+   * GET /student/:email
+   * Obtener estudiante por email 
+   */
+  @Get('student/:email')
+  async getStudentByEmail(@Param('email') email: string) {
+    return this.studentService.getStudentByEmail(email);
+  }
+
   @Get()
   findAll() {
     return this.studentService.findAll();
