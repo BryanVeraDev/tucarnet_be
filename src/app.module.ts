@@ -1,14 +1,17 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
+import { ConfigModule } from '@nestjs/config';
 import { StudentModule } from './student/student.module';
-import { BiometricProfileModule } from './biometric-profile/biometric-profile.module';
 import { UserModule } from './user/user.module';
 import { PhotoRequestModule } from './photo-request/photo-request.module';
+import { QrModule } from './qr/qr.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
-  imports: [StudentModule, BiometricProfileModule, UserModule, PhotoRequestModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [ConfigModule.forRoot({
+      isGlobal: true,
+    }),
+    StudentModule, UserModule, PhotoRequestModule, QrModule, AuthModule],
+  controllers: [],
+  providers: [],
 })
 export class AppModule {}
