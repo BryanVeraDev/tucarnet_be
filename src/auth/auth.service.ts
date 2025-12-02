@@ -1,6 +1,4 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { PrismaService } from 'prisma/prisma.service';
 import { DivisistService } from '../external-apis/divisist/divisist.service';
 import { MoodleService } from '../external-apis/moodle/moodle.service';
@@ -18,6 +16,8 @@ export class AuthService {
 
   /**
    * Valida que el correo sea institucional @ufps.edu.co
+   * @param email Correo a validar
+   * @throws UnauthorizedException Si el correo no es institucional
    */
   private validateUfpsEmail(email: string): void {
     if (!email.endsWith('@ufps.edu.co')) {
@@ -29,10 +29,11 @@ export class AuthService {
 
   /**
    * Login o registro del estudiante
+   * @param loginUserDto Datos del usuario a loguear o registrar
+   * @returns Datos del estudiante
    */
   async loginOrRegister(loginUserDto: LoginUserDto) {
     try {
-      
       const { uid, email, name } = loginUserDto;
 
       // 1. Validar correo institucional
@@ -61,6 +62,13 @@ export class AuthService {
       // 5. Normalizar datos de Divisist
       const normalized =
         this.divisistService.normalizeStudentData(divisistData);
+      // *** Type guard para el caso de error ***
+      if ('error' in normalized) {
+        throw new UnauthorizedException(
+          `No fue posible validar la información del estudiante: ${normalized.error}`,
+        );
+      }
+
       const isPregrado = isCareerPregrado(normalized.career);
       const studentType = isPregrado
         ? StudentType.PREGRADO
@@ -114,23 +122,7 @@ export class AuthService {
     }
   }
 
-  create(createAuthDto: CreateAuthDto) {
-    return 'This action adds a new auth';
-  }
-
-  findAll() {
-    return `This action returns all auth`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} auth`;
-  }
-
-  update(id: number, updateAuthDto: UpdateAuthDto) {
+  update(id: number) {
     return `This action updates a #${id} auth`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} auth`;
   }
 }

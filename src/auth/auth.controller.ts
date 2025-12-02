@@ -1,7 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { CreateAuthDto } from './dto/create-auth.dto';
-import { UpdateAuthDto } from './dto/update-auth.dto';
 import { FirebaseAuthGuard } from './guard/firebase-auth.guard';
 import { LoginUserDto } from '../student/dto/login-student.dto';
 
@@ -11,7 +18,9 @@ export class AuthController {
 
   /**
    * POST /auth/login
-   * Login o registro automático
+   * Inicia sesión o registra a un estudiante utilizando Firebase Authentication.
+   * @param loginUserDto DTO que contiene el email del estudiante.
+   * @return Información del estudiante si existe.
    */
   @Post('login')
   @UseGuards(FirebaseAuthGuard)
@@ -19,28 +28,14 @@ export class AuthController {
     return this.authService.loginOrRegister(loginUserDto);
   }
 
-  @Post()
-  create(@Body() createAuthDto: CreateAuthDto) {
-    return this.authService.create(createAuthDto);
-  }
-
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
+  /**
+   * PATCH /auth/:id
+   * Actualiza la información del estudiante asociado al email proporcionado.
+   * @param id ID del estudiante a actualizar.
+   * @return Información actualizada del estudiante.
+   */
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateAuthDto: UpdateAuthDto) {
-    return this.authService.update(+id, updateAuthDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  update(@Param('id') id: string) {
+    return this.authService.update(+id);
   }
 }

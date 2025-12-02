@@ -3,8 +3,9 @@
  */
 export interface DivisistStudentData {
   codigo?: string;
-  nombres?: string;
-  apellidos?: string;
+  nombre?: string;
+  email?: string;
   programa?: string;
+  semestre?: number;
   estado?: string;
 }
