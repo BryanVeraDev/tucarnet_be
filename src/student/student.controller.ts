@@ -13,7 +13,7 @@ export class StudentController {
    * @param email El email del estudiante.
    * @returns La información del estudiante asociado al email.
    */
-  @Get('student/:email')
+  @Get(':email')
   async getStudentByEmail(@Param('email') email: string) {
     return this.studentService.getStudentByEmail(email);
   }
