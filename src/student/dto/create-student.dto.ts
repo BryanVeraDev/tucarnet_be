@@ -27,7 +27,7 @@ export class CreateStudentDto {
 
     @IsOptional()
     @IsString()
-    card_photo_url: string;
+    card_photo_key: string;
 
     @IsNotEmpty()
     @IsEmail()

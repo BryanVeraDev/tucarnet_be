@@ -5,9 +5,8 @@ export class UpdateBiometricDto {
   @IsNotEmpty()
   student_id: string;
 
-  @IsUrl()
-  @IsNotEmpty()
-  card_photo_url: string;
+  @IsString()
+  card_photo_key: string;
 
   @IsNumber()
   @Min(0)

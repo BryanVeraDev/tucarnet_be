@@ -97,7 +97,7 @@ export class AuthService {
         data: {
           firebase_id: uid,
           student_code: normalized.studentCode,
-          card_photo_url: '',
+          card_photo_key: '',
           email: email,
           name: normalized.name || name || '',
           last_name: normalized.lastName,
