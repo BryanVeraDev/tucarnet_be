@@ -76,7 +76,7 @@ export class StudentService {
    */
   async updateBiometricProfile(updateBiometricDto: UpdateBiometricDto) {
     try {
-      const { student_id, card_photo_url, similarity } = updateBiometricDto;
+      const { student_id, card_photo_key, similarity } = updateBiometricDto;
 
       // 1. Verificar que el estudiante existe
       const student = await this.prisma.student.findUnique({
@@ -141,7 +141,7 @@ export class StudentService {
           await prisma.student.update({
             where: { student_id },
             data: {
-              card_photo_url,
+              card_photo_key,
               updated_at: new Date(),
             },
           });
@@ -205,7 +205,7 @@ export class StudentService {
           name: true,
           last_name: true,
           email: true,
-          card_photo_url: true,
+          card_photo_key: true,
           biometric_profile: {
             include: {
               validations: {
@@ -237,7 +237,7 @@ export class StudentService {
         student_id: student.student_id,
         name: `${student.name} ${student.last_name}`,
         email: student.email,
-        photo_url: student.card_photo_url,
+        photo_url: student.card_photo_key,
         biometric_status: student.biometric_profile.status,
         total_attempts: totalAttempts,
         last_validation: lastValidation
