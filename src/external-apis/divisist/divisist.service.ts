@@ -18,9 +18,9 @@ export class DivisistService {
       const response = await firstValueFrom(
         this.httpService.get(`${process.env.DIVISIST_API_URL}/student/email`, {
           params: { email },
-          headers: {
+          /*headers: {
             Authorization: `Bearer ${process.env.DIVISIST_API_KEY}`,
-          },
+          },*/
           timeout: 5000,
         }),
       );
