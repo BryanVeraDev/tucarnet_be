@@ -16,8 +16,8 @@ export class DivisistService {
   async getStudentByEmail(email: string): Promise<DivisistStudentData | null> {
     try {
       const response = await firstValueFrom(
-        this.httpService.get(`${process.env.DIVISIST_API_URL}/student/email`, {
-          params: { email },
+        this.httpService.get(`${process.env.DIVISIST_API_URL}/student/email/${email}`, {
+          //params: { email },
           /*headers: {
             Authorization: `Bearer ${process.env.DIVISIST_API_KEY}`,
           },*/
@@ -25,7 +25,11 @@ export class DivisistService {
         }),
       );
 
-      return response.data || null;
+      if (response.data?.ok && response.data?.data) {
+      return response.data.data as DivisistStudentData;
+    }
+
+      return null;
     } catch (error) {
       this.logger.error(
         `Error consultando Divisist para ${email}:`,
