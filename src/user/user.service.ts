@@ -3,6 +3,7 @@ import {
   BadRequestException,
   NotFoundException,
   UnauthorizedException,
+  ForbiddenException,
 } from '@nestjs/common';
 
 import { PrismaService } from 'prisma/prisma.service';
@@ -10,7 +11,10 @@ import { JwtService } from '@nestjs/jwt';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdatePasswordDto } from './dto/update-password-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+
+import { AdminRole, AdminStatus } from '@prisma/client';
 
 import * as bcrypt from 'bcrypt';
 
@@ -68,12 +72,52 @@ export class UserService {
    */
   async findAll() {
     return this.prisma.adminUser.findMany({
+      where: { status: AdminStatus.ACTIVO },
       select: {
         admin_id: true,
         name: true,
         last_name: true,
         email: true,
         role: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  /**
+   * Obtiene todos los usuarios administradores INACTIVOS (para dashboard).
+   * @returns Una lista de todos los usuarios administradores inactivos.
+   */
+  async findInactive() {
+    return this.prisma.adminUser.findMany({
+      where: { status: AdminStatus.INACTIVO },
+      select: {
+        admin_id: true,
+        name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        status: true,
+        created_at: true,
+      },
+      orderBy: { created_at: 'desc' },
+    });
+  }
+
+  /**
+   * Obtiene TODOS los usuarios (activos e inactivos) - Solo SuperAdmin.
+   * @returns Una lista completa de todos los usuarios administradores.
+   */
+  async findAllWithStatus() {
+    return this.prisma.adminUser.findMany({
+      select: {
+        admin_id: true,
+        name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        status: true,
         created_at: true,
       },
       orderBy: { created_at: 'desc' },
@@ -106,23 +150,117 @@ export class UserService {
   }
 
   /**
+   * Valida que el usuario actual esté ACTIVO antes de realizar operaciones.
+   * @param userId ID del usuario a validar.
+   * @throws UnauthorizedException si el usuario está inactivo.
+   */
+  private async validateActiveUser(userId: string): Promise<void> {
+    // Obtener el usuario
+    const user = await this.prisma.adminUser.findUnique({
+      where: { admin_id: userId },
+      select: { status: true },
+    });
+
+    // Validar estado
+    if (!user || user.status === AdminStatus.INACTIVO) {
+      throw new UnauthorizedException(
+        'Tu cuenta está inactiva. Contacta al administrador.',
+      );
+    }
+  }
+
+  /**
    * Actualiza un usuario administrador existente.
    * @param id El ID del usuario administrador a actualizar.
    * @param updateUserDto Datos para actualizar el usuario administrador.
+   * @param currentUserId ID del usuario que realiza la acción.
+   * @param currentUserRole Rol del usuario que realiza la acción.
    * @returns El usuario administrador actualizado.
    */
-  async update(id: string, updateUserDto: UpdateUserDto) {
-    await this.findOne(id); // valida que exista
+  async update(
+    id: string,
+    updateUserDto: UpdateUserDto,
+    currentUserId: string,
+    currentUserRole: AdminRole,
+  ) {
+    // Validar que el usuario actual esté activo
+    await this.validateActiveUser(currentUserId);
 
-    const data: any = { ...updateUserDto };
+    // Obtener el usuario objetivo
+    const targetUser = await this.findOne(id);
 
-    if (updateUserDto.password) {
+    // No puedes modificar tu propio rol
+    if (id === currentUserId && updateUserDto.role) {
+      throw new ForbiddenException('No puedes modificar tu propio rol');
+    }
+
+    // Solo SuperAdmin puede cambiar roles
+    if (updateUserDto.role && currentUserRole !== AdminRole.SuperAdmin) {
+      throw new ForbiddenException('Solo SuperAdmin puede modificar roles');
+    }
+
+    // No puedes desactivarte a ti mismo
+    if (id === currentUserId && updateUserDto.status === AdminStatus.INACTIVO) {
+      throw new ForbiddenException('No puedes desactivarte a ti mismo');
+    }
+
+    // Solo SuperAdmin puede cambiar estados
+    if (updateUserDto.status && currentUserRole !== AdminRole.SuperAdmin) {
+      throw new ForbiddenException(
+        'Solo SuperAdmin puede cambiar el estado de usuarios',
+      );
+    }
+
+    // Un SuperAdmin no puede quitarse su propio rol de SuperAdmin
+    if (
+      id === currentUserId &&
+      targetUser.role === AdminRole.SuperAdmin &&
+      updateUserDto.role &&
+      updateUserDto.role !== AdminRole.SuperAdmin
+    ) {
+      throw new ForbiddenException(
+        'No puedes quitarte tu propio rol de SuperAdmin',
+      );
+    }
+
+    // Actualizar datos
+    return this.prisma.adminUser.update({
+      where: { admin_id: id },
+      data: updateUserDto,
+      select: {
+        admin_id: true,
+        name: true,
+        last_name: true,
+        email: true,
+        role: true,
+        status: true,
+        created_at: true,
+      },
+    });
+  }
+
+  /**
+   * Actualiza la contraseña de un usuario administrador existente.
+   * @param id El ID del usuario administrador a actualizar.
+   * @param updatePasswordDto Datos para actualizar la contraseña del usuario administrador.
+   * @returns El usuario administrador actualizado.
+   */
+  async updatePassword(id: string, updatePasswordDto: UpdatePasswordDto) {
+    // Verificar que el usuario exista
+    await this.findOne(id);
+
+    // Preparar los datos para la actualización
+    const data: any = { ...updatePasswordDto };
+
+    // Hashear la nueva contraseña si se proporciona
+    if (updatePasswordDto.newPassword) {
       data.password = await bcrypt.hash(
-        updateUserDto.password,
+        updatePasswordDto.newPassword,
         this.SALT_ROUNDS,
       );
     }
 
+    // Actualizar la contraseña
     return this.prisma.adminUser.update({
       where: { admin_id: id },
       data,
@@ -156,31 +294,54 @@ export class UserService {
    * @returns Un objeto que contiene el token JWT si las credenciales son válidas.
    */
   async login(loginUserDto: LoginUserDto) {
+    //Buscar el usuario por email
     const user = await this.prisma.adminUser.findFirst({
       where: { email: loginUserDto.email },
     });
 
+    // Validar que el usuario exista
     if (!user) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
+    // Validar que el usuario esté activo
+    if (user.status === AdminStatus.INACTIVO) {
+      throw new UnauthorizedException(
+        'Tu cuenta está inactiva. Contacta al administrador.',
+      );
+    }
+
+    // Validar la contraseña
     const isPasswordValid = await bcrypt.compare(
       loginUserDto.password,
       user.password,
     );
 
+    // Si la contraseña no es válida, lanzar error
     if (!isPasswordValid) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // respuesta segura (sin password)
-    return {
-      admin_id: user.admin_id,
-      name: user.name,
-      last_name: user.last_name,
+    // Generar JWT
+    const payload = {
+      sub: user.admin_id,
       email: user.email,
       role: user.role,
-      created_at: user.created_at,
+    };
+
+    const access_token = this.jwtService.sign(payload);
+
+    // respuesta segura (sin password)
+    return {
+      access_token,
+      user: {
+        admin_id: user.admin_id,
+        name: user.name,
+        last_name: user.last_name,
+        email: user.email,
+        role: user.role,
+        created_at: user.created_at,
+      },
     };
   }
 
