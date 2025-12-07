@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 
 import { PrismaService } from 'prisma/prisma.service';
+import { JwtService } from '@nestjs/jwt';
 
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -15,11 +16,19 @@ import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
+  // Número de rondas para hashear la contraseña
   private readonly SALT_ROUNDS = 10;
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly jwtService: JwtService,
+  ) {}
 
-  // ✅ CREATE ADMIN USER
+  /**
+   * Crea un nuevo usuario administrador.
+   * @param createUserDto Datos necesarios para crear un nuevo usuario administrador.
+   * @returns El usuario administrador creado.
+   */
   async create(createUserDto: CreateUserDto) {
     const existingUser = await this.prisma.adminUser.findFirst({
       where: { email: createUserDto.email },
@@ -53,7 +62,10 @@ export class UserService {
     });
   }
 
-  // ✅ FIND ALL ADMINS
+  /**
+   * Obtiene todos los usuarios administradores.
+   * @returns Una lista de todos los usuarios administradores.
+   */
   async findAll() {
     return this.prisma.adminUser.findMany({
       select: {
@@ -68,7 +80,11 @@ export class UserService {
     });
   }
 
-  // ✅ FIND ONE BY ID
+  /**
+   * Obtiene un usuario administrador por su ID.
+   * @param id El ID del usuario administrador a buscar.
+   * @returns El usuario administrador correspondiente al ID proporcionado.
+   */
   async findOne(id: string) {
     const user = await this.prisma.adminUser.findUnique({
       where: { admin_id: id },
@@ -89,7 +105,12 @@ export class UserService {
     return user;
   }
 
-  // ✅ UPDATE ADMIN
+  /**
+   * Actualiza un usuario administrador existente.
+   * @param id El ID del usuario administrador a actualizar.
+   * @param updateUserDto Datos para actualizar el usuario administrador.
+   * @returns El usuario administrador actualizado.
+   */
   async update(id: string, updateUserDto: UpdateUserDto) {
     await this.findOne(id); // valida que exista
 
@@ -116,7 +137,11 @@ export class UserService {
     });
   }
 
-  // ✅ DELETE ADMIN
+  /**
+   * Elimina un usuario administrador por su ID.
+   * @param id El ID del usuario administrador a eliminar.
+   * @returns Un mensaje de confirmación de la eliminación.
+   */
   async remove(id: string) {
     await this.findOne(id); // valida que exista
 
@@ -125,7 +150,11 @@ export class UserService {
     });
   }
 
-  // ✅ LOGIN ADMIN
+  /**
+   * Inicia sesión con el email y la contraseña proporcionados.
+   * @param loginUserDto Datos de inicio de sesión que incluyen email y contraseña.
+   * @returns Un objeto que contiene el token JWT si las credenciales son válidas.
+   */
   async login(loginUserDto: LoginUserDto) {
     const user = await this.prisma.adminUser.findFirst({
       where: { email: loginUserDto.email },
@@ -144,7 +173,7 @@ export class UserService {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
-    // ✅ respuesta segura (sin password)
+    // respuesta segura (sin password)
     return {
       admin_id: user.admin_id,
       name: user.name,
@@ -155,7 +184,12 @@ export class UserService {
     };
   }
 
-  // ✅ VALIDAR PASSWORD (reutilizable para JWT)
+  /**
+   * Valida la contraseña proporcionada contra la contraseña hasheada almacenada.
+   * @param plainPassword Contraseña en texto plano proporcionada por el usuario.
+   * @param hashedPassword Contraseña hasheada almacenada en la base de datos.
+   * @returns True si la contraseña es válida, de lo contrario false.
+   */
   async validatePassword(
     plainPassword: string,
     hashedPassword: string,
