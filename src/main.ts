@@ -16,6 +16,12 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api');
 
+  app.enableCors({
+    origin: true, // ✅ permite cualquier origen
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  });
+
   const host = '0.0.0.0';
   const port = Number(process.env.PORT) || 3000;
 

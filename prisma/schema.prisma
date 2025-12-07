@@ -49,7 +49,7 @@ model Student {
   student_id     String         @id @default(uuid())
   firebase_id    String         @unique @db.VarChar
   student_code   String         @db.VarChar
-  card_photo_url String         @db.VarChar
+  card_photo_key String?         @db.VarChar
   email          String         @db.VarChar(50)
   name           String         @db.VarChar(50)
   last_name      String         @db.VarChar(50)
