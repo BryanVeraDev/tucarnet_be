@@ -40,6 +40,11 @@ enum ValidationResult {
   RECHAZADO
 }
 
+enum AdminStatus {
+  ACTIVO
+  INACTIVO
+}
+
 enum AdminRole {
   SuperAdmin
   ValidaTor
@@ -87,6 +92,7 @@ model AdminUser {
   admin_id  String    @id @default(uuid())
   name      String    @db.VarChar(50)
   last_name String    @db.VarChar(50)
+  status    AdminStatus @default(ACTIVO)
   role      AdminRole
   email     String    @db.VarChar(100)
   password  String    @db.VarChar(200)
@@ -101,6 +107,7 @@ model PhotoRequest {
   admin_id        String?            @db.VarChar
   status          PhotoRequestStatus
   new_photo_url   String?            @db.VarChar
+  rejection_reason String?           @db.Text
   application_date DateTime          @default(now())
   response_date    DateTime?
 
