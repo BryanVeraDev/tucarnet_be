@@ -19,14 +19,14 @@ export class StudentController {
   }
 
   /**
-   * GET /student/id/:student_id
-   * Obtener estudiante por ID
-   * @param student_id El ID del estudiante.
-   * @return La información del estudiante asociado al ID.
+   * GET /student/code/:student_code
+   * Obtener estudiante por código de estudiante
+   * @param student_id El código del estudiante.
+   * @return La información del estudiante asociado al código.
    */
-  @Get('id/:student_id')
-  async getStudentById(@Param('student_id') student_id: string) {
-    return this.studentService.getStudentByCode(student_id);
+  @Get('code/:student_code')
+  async getStudentById(@Param('student_code') student_code: string) {
+    return this.studentService.getStudentByCode(student_code);
   }
 
   /**
