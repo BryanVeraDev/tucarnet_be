@@ -19,6 +19,17 @@ export class StudentController {
   }
 
   /**
+   * GET /student/id/:student_id
+   * Obtener estudiante por ID
+   * @param student_id El ID del estudiante.
+   * @return La información del estudiante asociado al ID.
+   */
+  @Get('id/:student_id')
+  async getStudentById(@Param('student_id') student_id: string) {
+    return this.studentService.getStudentByCode(student_id);
+  }
+
+  /**
    * PATCH /student/biometric/validate
    * Actualizar perfil biométrico del estudiante
    * @param updateBiometricDto Objeto con los datos para actualizar el perfil biométrico.
