@@ -5,7 +5,7 @@ export class CreatePhotoRequestDto {
   @IsNotEmpty()
   student_id: string;
 
-  @IsUrl()
+  @IsString()
   @IsNotEmpty()
   new_photo_url: string;
 }
