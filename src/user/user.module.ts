@@ -11,8 +11,8 @@ import { JwtStrategy } from '../auth/jwt.strategy';
     PrismaModule,
     PassportModule,
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-secret-key-change-in-production',
-      signOptions: { expiresIn: '24h' }, // Token válido por 24 horas
+      secret: process.env.JWT_SECRET,
+      signOptions: { expiresIn: '24h' },
     }),
   ],
   controllers: [UserController],
