@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum } from 'class-validator';
+import { IsString, IsNotEmpty, IsEnum, IsDate } from 'class-validator';
 
 export class RespondPhotoRequestDto {
   @IsString()
@@ -12,4 +12,8 @@ export class RespondPhotoRequestDto {
   @IsEnum(['APROBADO', 'RECHAZADO'])
   @IsNotEmpty()
   status: 'APROBADO' | 'RECHAZADO';
+
+  @IsString()
+  @IsNotEmpty()
+  response_message: string;
 }

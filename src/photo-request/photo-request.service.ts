@@ -289,7 +289,7 @@ export class PhotoRequestService {
    */
   async respondToRequest(respondDto: RespondPhotoRequestDto) {
     try {
-      const { request_id, admin_id, status } = respondDto;
+      const { request_id, admin_id, status, response_message } = respondDto;
 
       // 1. Verificar que el admin existe
       const admin = await this.prisma.adminUser.findUnique({
@@ -322,15 +322,15 @@ export class PhotoRequestService {
           ? PhotoRequestStatus.APROBADO
           : PhotoRequestStatus.RECHAZADO;
 
-      // 4. Actualizar en transacción
+      // 4. Actualizar dentro de transacción
       const result = await this.prisma.$transaction(async (prisma) => {
-        // 4.1 Actualizar la solicitud
         const updatedRequest = await prisma.photoRequest.update({
           where: { request_id },
           data: {
             status: newStatus,
             admin_id,
             response_date: new Date(),
+            rejection_reason: status === 'RECHAZADO' ? response_message : null,
           },
           include: {
             student: true,
@@ -357,7 +357,7 @@ export class PhotoRequestService {
         message:
           status === 'APROBADO'
             ? 'Solicitud aprobada. La foto del estudiante ha sido actualizada.'
-            : 'Solicitud rechazada. La foto del estudiante permanece sin cambios.',
+            : 'Solicitud rechazada. Se registró el motivo proporcionado.',
         request: result,
       };
     } catch (error) {
