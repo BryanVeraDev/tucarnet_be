@@ -123,7 +123,7 @@ export class QrService {
       if (err.name === 'TokenExpiredError') {
         throw new UnauthorizedException('QR expirado, genera uno nuevo');
       }
-      throw new UnauthorizedException('QR inválido o expirado');
+      throw err;
     }
   }
 
